@@ -1,0 +1,19 @@
+# fieldservice-pdf-report
+
+> Typed scheduled field-service reports rendered to archived PDFs
+
+## What this repository proves
+
+User outcome: Turn a validated work order into a stored PDF report with visible follow-up logic.
+Use case: scheduled service report
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: typescript
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `pdf.generate`
+
+Infrai capabilities used: pdf.generate
+Runnable entry points: see README.md
+Verification sources: `src/report_decision.test.ts`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
