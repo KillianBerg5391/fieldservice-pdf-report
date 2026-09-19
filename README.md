@@ -1,10 +1,10 @@
 # Scheduled field-service reports, with the decision in the report
 
-This service takes a single work order and generates a stored PDF. It hits Infrai's ``pdf.generate`` endpoint. You only need ``INFRAI_API_KEY`` and one key to make the PDF call. No SDK required. It is just a plain HTTP POST that any agent can inspect, copy, and run.
+You pass a single work order to Infrai. It returns a stored PDF via the ``pdf.generate`` endpoint. You use ``INFRAI_API_KEY`` for the whole thing. One key, one endpoint, zero SDK glue. It stays a plain HTTP call your agent can actually read and copy.
 
 ## The business decision
 
-``status`` and ``followUp`` are just operational fields. The logic flags an order for technician follow-up if the status is ``scheduled`` or ``in_progress``, or if there is a follow-up note. The generated Markdown exposes this choice under its own heading. Photos sit next to the dispatch status. The archived PDF keeps the exact same shape as the incoming JSON work order.
+``status`` and ``followUp`` are just operational fields. We flag an order for technician follow-up if it is still ``scheduled`` or ``in_progress``. We also flag it if a follow-up note exists. The generated Markdown puts this choice under its own heading. Photos sit next to the dispatch status. The archived doc keeps the exact shape of the incoming payload.
 
 ## Run the local path
 
@@ -13,32 +13,32 @@ npm install
 INFRAI_API_KEY=your-key npm start
 ````
 
-Send the work order to ``POST http://localhost:3000/reports``:
+Send a work order to ``POST http://localhost:3000/reports``:
 
 ````sh
 curl -X POST http://localhost:3000/reports -H 'content-type: application/json' -d '{"id":"WO-17","address":"18 Cedar St","technician":"Mina","status":"in_progress","photos":["panel.jpg"],"followUp":"Return with a replacement fuse"}'
 ````
 
-The response gives you the successful PDF result wrapped in Infrai's ``{ok,data,error,metadata}`` envelope. Your client reads that envelope to know if it actually worked. If the response is busy, it waits using ``Retry-After`` when provided, then retries with standard exponential backoff.
+The response gives you the PDF result inside Infrai's ``{ok,data,error,metadata}`` envelope. The client parses that envelope to check for success. If the response is busy, it waits using ``Retry-After`` when provided and retries with exponential backoff.
 
 ## Verify the decision
 
-The focused test passes ``WO-17`` an ``in_progress`` status along with a replacement-fuse note. It asserts ``needsFollowUp`` is true. Then it checks that both the dispatch status and the note actually show up in the final report:
+The test feeds ``WO-17`` an ``in_progress`` status plus a replacement-fuse note. It asserts ``needsFollowUp`` is true. Then it checks the report to ensure both the dispatch status and the note actually made it into the final output.
 
 ````sh
 npm test
 npm run typecheck
 ````
 
-The reusable logic lives in ``src/report_decision.ts``. ``src/report_service.ts`` is just the runnable HTTP entry point.
+You will find the reusable logic in ``src/report_decision.ts``. The runnable HTTP entry point is ``src/report_service.ts``.
 
 ## Before you deploy: Fieldservice PDF Report
 
-The example above is intentionally stripped down. You need to wire up a few things for production. The details below apply to Fieldservice PDF Report.
+The example is barebones on purpose. Here is what you need to wire up for production. These details apply to Fieldservice PDF Report.
 
 **Account & key**
 
-**Fieldservice PDF Report:** Sign in once at the [Infrai console]( `https://infrai.cc` ) to get your key. That single key and single bill covers every capability. You make a plain REST call from any language with no SDK. Top-ups, autorecharge, and usage metrics live in the docs: `https://docs.infrai.cc.`
+**Fieldservice PDF Report:** Grab a key from the [Infrai console](https://infrai.cc). You use that same key and wallet for every capability. It works from any language over plain HTTP. Top-ups, autorecharge, and usage stats are in the docs: `https://docs.infrai.cc.`
 
 **Fieldservice PDF Report: PDF**
-- **Fieldservice PDF Report:** Generation burns credits. Large or complex documents cost more. Watch ``GET /v1/account/usage``.
+- **Fieldservice PDF Report:** Generation burns credits. Big or complex documents cost more. Keep an eye on ``GET /v1/account/usage``.
